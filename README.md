@@ -7,6 +7,7 @@
 4. flutter run
 
 ## Struktur Proyek
+```
 lib/
 ├── core/
 │ ├── assets/ # Path aset (gambar, ikon, dll.)
@@ -36,6 +37,7 @@ lib/
 │ ├── audio_book_view_model/
 │ └── courses_view_model/
 └── main.dart # Entry point aplikasi
+```
 
 ## Informasi Tambahan
 - Pastikan versi Flutter yang digunakan kompatibel dengan versi package pada pubspec.yaml.
