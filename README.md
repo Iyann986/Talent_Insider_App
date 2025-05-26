@@ -7,6 +7,7 @@
 4. flutter run
 
 ## Struktur Proyek
+ Menggunakan State Management Provider dan Architecture MVVM
 ```
 lib/
 ├── core/
@@ -44,5 +45,4 @@ lib/
 - Jika menggunakan plugin atau package tertentu, baca dokumentasi resmi package tersebut untuk konfigurasi tambahan.
 
 ## Hasil
-// cara masukin file gif bagaimana?
    ![alt text](talent_insider.gif)
