@@ -1,16 +1,46 @@
-# talent_insider_app
+# Talent Insider App
 
-A new Flutter project.
+## Petunjuk Tentang Cara Menjalankan Project
+1. clone Project ini di github
+2. cd nama-repo
+3. flutter pub get
+4. flutter run
 
-## Getting Started
+## Struktur Proyek
+lib/
+├── core/
+│ ├── assets/ # Path aset (gambar, ikon, dll.)
+│ │ └── resource_path.dart
+│ ├── components/ # Widget reusable
+│ │ └── button.dart
+│ ├── constants/ # Konstanta teks dan warna
+│ │ ├── app_label.dart
+│ │ └── color.dart
+│ └── themes/style/ # Gaya teks dan tema
+│ └── textstyle.dart
+├── models/
+│ ├── apis/ # Controller API
+│ │ ├── course_api_controller/
+│ │ └── login_api_controller/
+│ ├── courses_model/
+│ └── user_model/
+├── view/ # Tampilan UI
+│ ├── audio_book/
+│ ├── courses/
+│ ├── home/
+│ ├── login/
+│ ├── nav_bar/
+│ ├── onboarding/
+│ └── profile/
+├── view_model/ # ViewModel untuk manajemen data
+│ ├── audio_book_view_model/
+│ └── courses_view_model/
+└── main.dart # Entry point aplikasi
 
-This project is a starting point for a Flutter application.
+## Informasi Tambahan
+- Pastikan versi Flutter yang digunakan kompatibel dengan versi package pada pubspec.yaml.
+- Jika menggunakan plugin atau package tertentu, baca dokumentasi resmi package tersebut untuk konfigurasi tambahan.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Hasil
+// cara masukin file gif bagaimana?
+   ![alt text](talent_insider.gif)
