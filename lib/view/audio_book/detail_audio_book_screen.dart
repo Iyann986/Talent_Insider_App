@@ -1,17 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:talent_insider_app/core/assets/resource_path.dart';
 import 'package:talent_insider_app/core/constants/color.dart';
 import 'package:talent_insider_app/core/themes/style/textstyle.dart';
-import 'package:talent_insider_app/view/audio_book/audio_book_screen.dart';
+import 'package:talent_insider_app/models/audio_model/audio_model.dart';
 
-class AudioPlayerScreen extends StatelessWidget {
-  final Book book;
+class DetailAudioScreen extends StatefulWidget {
+  final AudioModel book;
 
-  const AudioPlayerScreen({super.key, required this.book});
+  const DetailAudioScreen({super.key, required this.book});
+
+  @override
+  State<DetailAudioScreen> createState() => _DetailAudioScreenState();
+}
+
+class _DetailAudioScreenState extends State<DetailAudioScreen> {
+  final AudioPlayer _player = AudioPlayer();
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePlayer();
+  }
+
+  Future<void> _initializePlayer() async {
+    try {
+      if (widget.book.path.isNotEmpty) {
+        final url = widget.book.path.first.url;
+        await _player.setUrl(url);
+
+        _player.durationStream.listen((d) {
+          if (d != null) {
+            setState(() => _duration = d);
+          }
+        });
+
+        _player.positionStream.listen((p) {
+          setState(() => _position = p);
+        });
+
+        _player.play();
+        setState(() => _isPlaying = true);
+      }
+    } catch (e) {
+      print("Error loading audio: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  String formatTime(Duration duration) {
+    return duration.toString().split('.').first.padLeft(4, "0");
+  }
 
   @override
   Widget build(BuildContext context) {
+    final book = widget.book;
+    final String date = DateFormat('MMM d').format(book.createdAt);
+    final String language = book.languange;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -19,12 +75,9 @@ class AudioPlayerScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             ResourcePath.tombolBackDownSvg,
-            // ignore: deprecated_member_use
             color: AppColors.white,
           ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           children: [
@@ -35,211 +88,207 @@ class AudioPlayerScreen extends StatelessWidget {
                 fontSize: 14,
               ),
             ),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '"UX"',
-                    style: TalentTextStyle.mdSemibold.copyWith(
-                      color: AppColors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' in ',
-                    style: TalentTextStyle.mdSemibold.copyWith(
-                      color: AppColors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'Search',
-                    style: TalentTextStyle.mdSemibold.copyWith(
-                      color: AppColors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
+            Text(
+              book.title,
+              style: TalentTextStyle.mdSemibold.copyWith(
+                color: AppColors.white,
+                fontSize: 16,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () {},
           ),
         ],
-        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(0),
-        child: Column(
-          children: [
-            // Image Cover
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  book.image,
-                  width: double.infinity,
-                  height: 370,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            // Title & Author
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      book.title.length > 24
-                          ? book.title.substring(0, 21) + '...'
-                          : book.title,
-                      style: const TextStyle(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    book.thumbnail.isNotEmpty ? book.thumbnail.first.url : '',
+                    width: double.infinity,
+                    height: 370,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey,
+                      height: 370,
+                      child: const Icon(
+                        Icons.broken_image,
                         color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // const Icon(Icons.headset, color: Colors.yellow, size: 28),
-                  SvgPicture.asset(
-                    ResourcePath.headsetSvg,
-                    color: Colors.yellow,
-                    height: 26,
-                    width: 26,
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.play_arrow_rounded,
-                    size: 28,
-                    color: AppColors.white,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${book.author} · UI/UX Designer',
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // Tag & Date
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        book.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SvgPicture.asset(
+                      ResourcePath.headsetSvg,
+                      color: Colors.yellow,
+                      height: 26,
+                      width: 26,
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.play_arrow_rounded,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${book.artist} · ${book.path.first.fileName}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white12,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(
+                            Icons.school_outlined,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Soft Skill',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '$date · in $language',
+                      style: const TextStyle(color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
+              Slider(
+                value: _position.inSeconds.toDouble().clamp(
+                  0.0,
+                  _duration.inSeconds.toDouble(),
+                ),
+                max: _duration.inSeconds.toDouble(),
+                onChanged: (val) async {
+                  await _player.seek(Duration(seconds: val.toInt()));
+                },
+                activeColor: Colors.white,
+                inactiveColor: Colors.white30,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      formatTime(_position),
+                      style: const TextStyle(color: Colors.white54),
+                    ),
+                    Text(
+                      formatTime(_duration),
+                      style: const TextStyle(color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white12,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(
-                          Icons.school_outlined,
-                          color: Colors.white70,
-                          size: 18,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Soft Skill',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    'Aug 4 · in English',
-                    style: const TextStyle(color: Colors.white54, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Slider + Duration
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Slider(
-                  value: 83,
-                  min: 0,
-                  max: 216,
-                  onChanged: (val) {},
-                  activeColor: Colors.white,
-                  inactiveColor: Colors.white30,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('1:23', style: TextStyle(color: Colors.white54)),
-                      Text('3:36', style: TextStyle(color: Colors.white54)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Playback controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white70),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.skip_previous, color: Colors.white),
-                  onPressed: () {},
-                  iconSize: 36,
-                ),
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.white,
-                  child: IconButton(
+                  IconButton(
                     icon: const Icon(
-                      Icons.pause,
-                      color: Colors.black,
-                      size: 32,
+                      Icons.share_outlined,
+                      color: Colors.white70,
                     ),
                     onPressed: () {},
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.skip_next, color: Colors.white),
-                  onPressed: () {},
-                  iconSize: 36,
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.bookmark_border,
-                    color: Colors.white70,
+                  IconButton(
+                    icon: const Icon(Icons.skip_previous, color: Colors.white),
+                    onPressed: () {},
+                    iconSize: 36,
                   ),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ],
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.white,
+                    child: IconButton(
+                      icon: Icon(
+                        _isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: Colors.black,
+                        size: 32,
+                      ),
+                      onPressed: () async {
+                        if (_isPlaying) {
+                          await _player.pause();
+                        } else {
+                          await _player.play();
+                        }
+                        setState(() => _isPlaying = !_isPlaying);
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.skip_next, color: Colors.white),
+                    onPressed: () {},
+                    iconSize: 36,
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.bookmark_border,
+                      color: Colors.white70,
+                    ),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

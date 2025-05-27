@@ -190,7 +190,8 @@ class _NavCoursesScreenState extends State<NavCoursesScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => DetailCourseScreen(),
+                                  builder: (context) =>
+                                      DetailCourseScreen(course: course),
                                 ),
                               );
                             },

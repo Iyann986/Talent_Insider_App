@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 import 'package:talent_insider_app/core/assets/resource_path.dart';
 import 'package:talent_insider_app/core/constants/app_label.dart';
 import 'package:talent_insider_app/core/constants/color.dart';
 import 'package:talent_insider_app/core/themes/style/textstyle.dart';
 import 'package:talent_insider_app/view/audio_book/detail_audio_book_screen.dart';
+import 'package:talent_insider_app/view_model/audio_book_view_model/audio_book_view_model.dart';
 
 class AudioBookScreen extends StatefulWidget {
   const AudioBookScreen({super.key});
@@ -14,6 +16,15 @@ class AudioBookScreen extends StatefulWidget {
 }
 
 class _AudioBookScreenState extends State<AudioBookScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      // ignore: use_build_context_synchronously
+      Provider.of<AudioBookViewModel>(context, listen: false).fetchAudioBooks();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,63 +106,85 @@ class _AudioBookScreenState extends State<AudioBookScreen> {
               const SizedBox(height: 12),
               SizedBox(
                 height: 260,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: bestSellerBooks.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final book = bestSellerBooks[index];
-                    return InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AudioPlayerScreen(book: book),
-                          ),
-                        );
-                      },
-                      child: SizedBox(
-                        width: 140,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                book.image,
-                                width: 140,
-                                height: 210,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              book.title.length > 22
-                                  ? book.title.substring(0, 19) + '...'
-                                  : book.title,
-                              style: TalentTextStyle.msMedium.copyWith(
-                                color: AppColors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              book.author,
-                              style: TalentTextStyle.smRegular.copyWith(
-                                color: AppColors.white,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                child: Consumer<AudioBookViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.state == AudioBookViewState.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (viewModel.state == AudioBookViewState.error) {
+                      return Center(
+                        child: Text(
+                          viewModel.errorMessage ?? 'Error',
+                          style: TextStyle(color: Colors.white),
                         ),
-                      ),
-                    );
+                      );
+                    } else if (viewModel.audioBooks.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No audio books available',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    } else {
+                      final bestSellerBooks = viewModel.audioBooks;
+
+                      return ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: bestSellerBooks.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          final book = bestSellerBooks[index];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailAudioScreen(book: book),
+                                ),
+                              );
+                            },
+                            child: SizedBox(
+                              width: 140,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      book.thumbnail.first.url,
+                                      width: 140,
+                                      height: 210,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    book.title,
+                                    style: TalentTextStyle.msMedium.copyWith(
+                                      color: AppColors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    book.artist,
+                                    style: TalentTextStyle.smRegular.copyWith(
+                                      color: AppColors.white,
+                                      fontSize: 12,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
                   },
                 ),
               ),
